@@ -87,7 +87,7 @@ CREATE INDEX idx_tasks_created_by ON tasks(created_by) WHERE NOT is_archived;
 ## Список этапов разработки
 
 ### MCP инструменты:
-- [ ] `ping` - Тестовый инструмент для проверки подключения
+- [ ] `create_user` - админский инструмент создания пользователей
 - [ ] `create_task` - Создание новой задачи
 - [ ] `get_next_task` - Получение следующей задачи по фильтру статусов
 - [ ] `update_task` - Обновление задачи
@@ -109,32 +109,10 @@ CREATE INDEX idx_tasks_created_by ON tasks(created_by) WHERE NOT is_archived;
 3. Настроить .env конфигурацию (только MCP_SERVER_PORT и LOG_LEVEL)
 4. Настроить базовый MCP сервер
 5. Реализовать graceful shutdown
-6. Реализовать инструмент ping
 
-**MCP инструмент**:
-
-<details>
-<summary><b>ping</b> - Тестовый инструмент для проверки подключения</summary>
-
-```go
-pingTool := mcp.NewTool("ping",
-    mcp.WithDescription("Test connection to the task manager server"),
-)
-```
-
-Возвращает:
-```json
-{
-    "status": "ok",
-    "server_time": "2024-01-01T12:00:00Z",
-    "version": "0.1.0"
-}
-```
-</details>
 
 **Проверка**: 
 - Сервер запускается на порту из конфигурации
-- Отвечает на ping запрос
 - Корректно завершается по Ctrl+C (graceful shutdown)
 - Логирование работает
 
@@ -146,13 +124,12 @@ pingTool := mcp.NewTool("ping",
 2. Создать миграции для таблиц users и tasks
 3. Создать модели User и Task
 4. Реализовать JWT middleware
-5. Обновить ping для показа статуса БД
+5. Создать инструмент create_user для админов
 
 **Проверка**:
 - Подключается к БД по DATABASE_URL
 - Миграции применяются успешно
 - JWT токен валидируется корректно
-- ping показывает db_connected: true
 
 ### Этап 3: Создание задач (create_task)
 **Цель**: Реализовать создание новых задач
