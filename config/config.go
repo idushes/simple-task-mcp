@@ -12,6 +12,8 @@ import (
 type Config struct {
 	MCPServerPort int
 	LogLevel      string
+	DatabaseURL   string
+	JWTSecret     string
 }
 
 // Load loads configuration from environment variables
@@ -22,6 +24,8 @@ func Load() (*Config, error) {
 	cfg := &Config{
 		MCPServerPort: getEnvAsInt("MCP_SERVER_PORT", 8080),
 		LogLevel:      getEnv("LOG_LEVEL", "info"),
+		DatabaseURL:   getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/task_manager?sslmode=disable"),
+		JWTSecret:     getEnv("JWT_SECRET", "your-secret-key-here"),
 	}
 
 	return cfg, nil

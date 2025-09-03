@@ -87,7 +87,7 @@ CREATE INDEX idx_tasks_created_by ON tasks(created_by) WHERE NOT is_archived;
 ## Список этапов разработки
 
 ### MCP инструменты:
-- [ ] `create_user` - админский инструмент создания пользователей
+- [x] `create_user` - админский инструмент создания пользователей
 - [ ] `create_task` - Создание новой задачи
 - [ ] `get_next_task` - Получение следующей задачи по фильтру статусов
 - [ ] `update_task` - Обновление задачи
