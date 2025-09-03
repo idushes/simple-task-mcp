@@ -84,14 +84,19 @@ CREATE INDEX idx_tasks_created_by ON tasks(created_by) WHERE NOT is_archived;
 - `completed` - завершена
 - `cancelled` - отменена
 
-## Список MCP инструментов
+## Список этапов разработки
 
+### MCP инструменты:
 - [ ] `ping` - Тестовый инструмент для проверки подключения
 - [ ] `create_task` - Создание новой задачи
 - [ ] `get_next_task` - Получение следующей задачи по фильтру статусов
 - [ ] `update_task` - Обновление задачи
 - [ ] `update_task_status` - Изменение статуса задачи
 - [ ] `archive_task` - Архивирование задачи
+
+### Инфраструктура:
+- [ ] Docker контейнеризация
+- [ ] GitHub Actions CI/CD
 
 ## Этапы разработки
 
@@ -292,6 +297,131 @@ archiveTaskTool := mcp.NewTool("archive_task",
 - Устанавливает is_archived=true
 - Устанавливает archived_at
 - Не позволяет архивировать уже архивные задачи
+
+### Этап 8: Docker контейнеризация
+**Цель**: Создать Docker образ для удобного развертывания
+
+**Задачи**:
+1. Создать Dockerfile для сборки приложения
+2. Добавить .dockerignore
+3. Оптимизировать образ (multi-stage build)
+
+**Файлы**:
+
+<details>
+<summary><b>Dockerfile</b> - Multi-stage build для оптимального размера</summary>
+
+```dockerfile
+# Build stage
+FROM golang:1.21-alpine AS builder
+RUN apk add --no-cache git
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+
+# Final stage
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY --from=builder /app/main .
+COPY --from=builder /app/.env.example .env.example
+CMD ["./main"]
+```
+</details>
+
+<details>
+<summary><b>.dockerignore</b> - Исключение ненужных файлов</summary>
+
+```
+.git
+.gitignore
+.env
+*.md
+.github/
+docker-compose.yml
+Dockerfile
+.dockerignore
+```
+</details>
+
+**Проверка**:
+- Docker образ собирается успешно
+- Размер образа минимальный (alpine + бинарник)
+- Приложение запускается из образа
+- Переменные окружения передаются корректно
+
+### Этап 9: GitHub Actions CI/CD
+**Цель**: Настроить автоматическую сборку и публикацию Docker образа в Docker Hub
+
+**Задачи**:
+1. Создать workflow для автоматической сборки
+2. Настроить публикацию в Docker Hub при push в main
+3. Настроить правильное тегирование образов
+
+**Файлы**:
+
+<details>
+<summary><b>.github/workflows/docker-publish.yml</b> - Автоматическая сборка и публикация</summary>
+
+```yaml
+name: Docker Build and Push
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/simple-task-mcp
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+```
+</details>
+
+**Необходимые секреты в GitHub**:
+- `DOCKER_USERNAME` - имя пользователя Docker Hub
+- `DOCKER_PASSWORD` - токен доступа Docker Hub
+
+**Проверка**:
+- Push в main запускает автоматическую сборку
+- Docker образ публикуется в Docker Hub
+- Образ доступен по тегу latest для main ветки
+- При создании git тега v* образ публикуется с соответствующей версией
 
 
 
