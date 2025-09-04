@@ -19,7 +19,7 @@ The server uses PostgreSQL for data persistence and JWT tokens for authenticatio
 
 **Users Table**:
 - `id` (UUID) - Primary key
-- `name` (VARCHAR) - User name
+- `name` (VARCHAR) - User name (unique)
 - `is_admin` (BOOLEAN) - Admin privileges
 - `created_at` (TIMESTAMP)
 - `updated_at` (TIMESTAMP)
@@ -168,6 +168,31 @@ Creates a new user in the system. Only admins can use this tool.
 }
 ```
 
+### create_task
+
+Creates a new task and assigns it to a user.
+
+**Parameters**:
+- `description` (string, required) - Task description
+- `assigned_to` (string, required) - Username to assign the task to
+
+**Authentication**: Required (JWT token in Authorization header)
+
+**Example Response**:
+```json
+{
+  "id": "456e7890-e89b-12d3-a456-426614174000",
+  "description": "Implement user authentication",
+  "status": "pending",
+  "created_by": "123e4567-e89b-12d3-a456-426614174000",
+  "created_by_name": "Admin User",
+  "assigned_to": "789e0123-e89b-12d3-a456-426614174000",
+  "assigned_to_name": "John Doe",
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
+}
+```
+
 ## Development
 
 ### Running in Development Mode
@@ -187,6 +212,20 @@ go run main.go
 go run ./cmd/create-admin
 ```
 
+### Running Tests
+
+Test scripts are located in the `tests/` directory:
+
+```bash
+# Test database connection
+./tests/test_connection.sh
+
+# Test create_task tool
+./tests/test_create_task.sh <JWT_TOKEN> <USERNAME>
+```
+
+See `tests/README.md` for more details.
+
 ### Project Structure
 
 ```
@@ -198,6 +237,7 @@ simple-task-mcp/
 ├── database/          # Database connection and migrations
 ├── models/            # Data models
 ├── server/            # HTTP middleware
+├── tests/             # Test scripts and documentation
 ├── tools/             # MCP tool implementations
 └── main.go            # Application entry point
 ```
@@ -208,7 +248,7 @@ simple-task-mcp/
 - [x] PostgreSQL integration
 - [x] JWT authentication
 - [x] User management (create_user tool)
-- [ ] Task creation (create_task tool)
+- [x] Task creation (create_task tool)
 - [ ] Task retrieval (get_next_task tool)
 - [ ] Task updates (update_task tool)
 - [ ] Task status management (update_task_status tool)

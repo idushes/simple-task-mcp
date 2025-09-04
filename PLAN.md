@@ -49,11 +49,14 @@ simple-task-mcp/
 ```sql
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE,
     is_admin BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Индекс для быстрого поиска по имени
+CREATE INDEX idx_users_name ON users(name);
 ```
 
 ### Tasks
@@ -88,7 +91,7 @@ CREATE INDEX idx_tasks_created_by ON tasks(created_by) WHERE NOT is_archived;
 
 ### MCP инструменты:
 - [x] `create_user` - админский инструмент создания пользователей
-- [ ] `create_task` - Создание новой задачи
+- [x] `create_task` - Создание новой задачи
 - [ ] `get_next_task` - Получение следующей задачи по фильтру статусов
 - [ ] `update_task` - Обновление задачи
 - [ ] `update_task_status` - Изменение статуса задачи
@@ -148,7 +151,7 @@ createTaskTool := mcp.NewTool("create_task",
     ),
     mcp.WithString("assigned_to",
         mcp.Required(),
-        mcp.Description("User ID (UUID) to assign the task to"),
+        mcp.Description("Username to assign the task to"),
     ),
 )
 ```
@@ -157,8 +160,9 @@ createTaskTool := mcp.NewTool("create_task",
 **Проверка**:
 - Требует валидный JWT токен
 - Создает задачу с created_by из токена
-- Возвращает ID созданной задачи
-- Проверяет существование assigned_to пользователя
+- Возвращает ID созданной задачи и имена пользователей
+- Находит пользователя по имени для assigned_to
+- Проверяет существование пользователя по имени
 
 ### Этап 4: Получение следующей задачи (get_next_task)
 **Цель**: Реализовать получение задач по фильтру
@@ -208,7 +212,7 @@ updateTaskTool := mcp.NewTool("update_task",
         mcp.Description("New task description"),
     ),
     mcp.WithString("assigned_to",
-        mcp.Description("New assigned user ID (UUID)"),
+        mcp.Description("New assigned username"),
     ),
 )
 ```
@@ -439,6 +443,8 @@ JWT токен должен содержать следующие claims:
 - Ограничивать длину строк
 - Валидировать enum значения
 - Проверять права доступа (только создатель или исполнитель может изменять задачу)
+- Имена пользователей должны быть уникальными
+- При работе с пользователями использовать имена вместо UUID для удобства
 
 ### Безопасность
 - Использовать подготовленные запросы для защиты от SQL инъекций
@@ -448,6 +454,7 @@ JWT токен должен содержать следующие claims:
 ### Производительность
 - Использовать индексы для часто используемых полей
 - get_next_task должен быть оптимизирован для быстрого получения одной задачи
+- Индекс на users.name для быстрого поиска пользователей по имени
 
 ## Тестирование каждого этапа
 

@@ -68,6 +68,9 @@ func RegisterCreateUserTool(s *server.MCPServer, jwtManager *auth.JWTManager) er
 
 		err = database.DB.QueryRow(query, name, isAdmin).Scan(&userID)
 		if err != nil {
+			if strings.Contains(err.Error(), "users_name_unique") || strings.Contains(err.Error(), "duplicate key value") {
+				return mcp.NewToolResultError(fmt.Sprintf("user with name '%s' already exists", name)), nil
+			}
 			return mcp.NewToolResultError(fmt.Sprintf("failed to create user: %v", err)), nil
 		}
 
