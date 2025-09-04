@@ -10,6 +10,9 @@ import (
 )
 
 func main() {
+	// Configure logging to match main application
+	log.SetFlags(log.Ldate | log.Ltime)
+
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {

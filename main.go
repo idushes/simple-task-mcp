@@ -152,7 +152,7 @@ func registerTools(mcpServer *server.MCPServer, jwtManager *auth.JWTManager) err
 func configureLogging(level string) {
 	// For simplicity, we'll just use standard log package
 	// In a production app, you might want to use a more sophisticated logging library
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	log.SetFlags(log.Ldate | log.Ltime)
 
 	// You can add more sophisticated log level handling here if needed
 	switch level {
