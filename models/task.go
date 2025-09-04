@@ -18,16 +18,17 @@ const (
 
 // Task represents a task in the system
 type Task struct {
-	ID          string       `json:"id"`
-	Description string       `json:"description"`
-	Status      TaskStatus   `json:"status"`
-	CreatedBy   string       `json:"created_by"`
-	AssignedTo  string       `json:"assigned_to"`
-	IsArchived  bool         `json:"is_archived"`
-	CreatedAt   time.Time    `json:"created_at"`
-	UpdatedAt   time.Time    `json:"updated_at"`
-	CompletedAt sql.NullTime `json:"completed_at,omitempty"`
-	ArchivedAt  sql.NullTime `json:"archived_at,omitempty"`
+	ID          string         `json:"id"`
+	Description string         `json:"description"`
+	Status      TaskStatus     `json:"status"`
+	CreatedBy   string         `json:"created_by"`
+	AssignedTo  string         `json:"assigned_to"`
+	IsArchived  bool           `json:"is_archived"`
+	Result      sql.NullString `json:"result,omitempty"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	CompletedAt sql.NullTime   `json:"completed_at,omitempty"`
+	ArchivedAt  sql.NullTime   `json:"archived_at,omitempty"`
 }
 
 // IsValidStatus checks if the given status is valid

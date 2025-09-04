@@ -29,6 +29,7 @@ type GetNextTaskOutput struct {
 	CreatedByID  string  `json:"created_by_id"`
 	AssignedTo   string  `json:"assigned_to"`
 	AssignedToID string  `json:"assigned_to_id"`
+	Result       *string `json:"result,omitempty"`
 	CreatedAt    string  `json:"created_at"`
 	UpdatedAt    string  `json:"updated_at"`
 	CompletedAt  *string `json:"completed_at,omitempty"`
@@ -111,7 +112,7 @@ func RegisterGetNextTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) e
 		query := fmt.Sprintf(`
 			SELECT 
 				t.id, t.description, t.status, 
-				t.created_by, t.assigned_to,
+				t.created_by, t.assigned_to, t.result,
 				t.created_at, t.updated_at, t.completed_at,
 				creator.name as creator_name,
 				assignee.name as assignee_name
@@ -129,11 +130,12 @@ func RegisterGetNextTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) e
 		var task models.Task
 		var creatorName, assigneeName string
 		var completedAt sql.NullTime
+		var result sql.NullString
 		var statusStr string
 
 		err = db.QueryRow(query, queryArgs...).Scan(
 			&task.ID, &task.Description, &statusStr,
-			&task.CreatedBy, &task.AssignedTo,
+			&task.CreatedBy, &task.AssignedTo, &result,
 			&task.CreatedAt, &task.UpdatedAt, &completedAt,
 			&creatorName, &assigneeName,
 		)
@@ -160,6 +162,10 @@ func RegisterGetNextTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) e
 			AssignedToID: task.AssignedTo,
 			CreatedAt:    task.CreatedAt.Format("2006-01-02T15:04:05Z"),
 			UpdatedAt:    task.UpdatedAt.Format("2006-01-02T15:04:05Z"),
+		}
+
+		if result.Valid {
+			output.Result = &result.String
 		}
 
 		if completedAt.Valid {
