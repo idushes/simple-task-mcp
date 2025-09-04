@@ -149,6 +149,11 @@ func registerTools(mcpServer *server.MCPServer, jwtManager *auth.JWTManager) err
 		return fmt.Errorf("failed to register complete_task tool: %w", err)
 	}
 
+	// Register cancel_task tool
+	if err := tools.RegisterCancelTaskTool(mcpServer, jwtManager); err != nil {
+		return fmt.Errorf("failed to register cancel_task tool: %w", err)
+	}
+
 	log.Println("All tools registered successfully")
 	return nil
 }

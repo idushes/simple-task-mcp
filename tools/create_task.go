@@ -2,6 +2,7 @@ package tools
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"regexp"
@@ -81,7 +82,7 @@ func RegisterCreateTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) er
 		var assignedToID string
 		err = database.DB.QueryRow("SELECT id FROM users WHERE name = $1", assignedToUsername).Scan(&assignedToID)
 		if err != nil {
-			if err.Error() == "no rows in result set" {
+			if err == sql.ErrNoRows {
 				return mcp.NewToolResultError(fmt.Sprintf("user '%s' does not exist", assignedToUsername)), nil
 			}
 			log.Printf("Error finding user by name: %v", err)

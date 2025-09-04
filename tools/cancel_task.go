@@ -15,22 +15,23 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-// CompleteTaskInput represents the input for complete_task tool
-type CompleteTaskInput struct {
+// CancelTaskInput represents the input for cancel_task tool
+type CancelTaskInput struct {
 	ID     string `json:"id"`
-	Result string `json:"result,omitempty"`
+	Reason string `json:"reason"`
 }
 
-// RegisterCompleteTaskTool registers the complete_task tool
-func RegisterCompleteTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) error {
-	completeTaskTool := mcp.NewTool("complete_task",
-		mcp.WithDescription("Mark task as completed and optionally add result"),
+// RegisterCancelTaskTool registers the cancel_task tool
+func RegisterCancelTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) error {
+	cancelTaskTool := mcp.NewTool("cancel_task",
+		mcp.WithDescription("Cancel a task with cancellation reason"),
 		mcp.WithString("id",
 			mcp.Required(),
 			mcp.Description("Task ID (UUID)"),
 		),
-		mcp.WithString("result",
-			mcp.Description("Task completion result or notes"),
+		mcp.WithString("reason",
+			mcp.Required(),
+			mcp.Description("Reason for task cancellation"),
 		),
 	)
 
@@ -56,7 +57,7 @@ func RegisterCompleteTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) 
 		userID := claims.UserID
 
 		// Parse input
-		var input CompleteTaskInput
+		var input CancelTaskInput
 		inputBytes, err := json.Marshal(request.Params.Arguments)
 		if err != nil {
 			log.Printf("Error marshaling args: %v", err)
@@ -71,6 +72,9 @@ func RegisterCompleteTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) 
 		if input.ID == "" {
 			return mcp.NewToolResultError("task ID is required"), nil
 		}
+		if input.Reason == "" {
+			return mcp.NewToolResultError("cancellation reason is required"), nil
+		}
 
 		// Validate UUID format
 		if !isValidUUID(input.ID) {
@@ -80,16 +84,17 @@ func RegisterCompleteTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) 
 		// Get database connection
 		db := database.DB
 
-		// Check if task exists and user has permission to complete it
+		// Check if task exists and user has permission to cancel it
 		var currentStatus string
 		var isArchived bool
 		var createdBy, assignedTo string
+		var currentResult *string
 		checkQuery := `
-			SELECT status, is_archived, created_by, assigned_to 
+			SELECT status, is_archived, created_by, assigned_to, result
 			FROM tasks 
 			WHERE id = $1`
 
-		err = db.QueryRow(checkQuery, input.ID).Scan(&currentStatus, &isArchived, &createdBy, &assignedTo)
+		err = db.QueryRow(checkQuery, input.ID).Scan(&currentStatus, &isArchived, &createdBy, &assignedTo, &currentResult)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				return mcp.NewToolResultError("task not found"), nil
@@ -100,31 +105,46 @@ func RegisterCompleteTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) 
 
 		// Check if user has permission (must be creator or assignee)
 		if createdBy != userID && assignedTo != userID {
-			return mcp.NewToolResultError("permission denied: you can only complete tasks you created or are assigned to"), nil
+			return mcp.NewToolResultError("permission denied: you can only cancel tasks you created or are assigned to"), nil
 		}
 
 		// Check if task is already archived
 		if isArchived {
-			return mcp.NewToolResultError("cannot complete archived task"), nil
+			return mcp.NewToolResultError("cannot cancel archived task"), nil
 		}
 
 		// Check if task is already completed
 		if currentStatus == string(models.StatusCompleted) {
-			return mcp.NewToolResultError("task is already completed"), nil
+			return mcp.NewToolResultError("cannot cancel completed task"), nil
 		}
 
-		// Update task to completed status
+		// Check if task is already cancelled
+		if currentStatus == string(models.StatusCancelled) {
+			return mcp.NewToolResultError("task is already cancelled"), nil
+		}
+
+		// Prepare the result field with cancellation reason
+		var newResult string
+		if currentResult != nil && *currentResult != "" {
+			// Append cancellation reason to existing result
+			newResult = fmt.Sprintf("%s\n\n[CANCELLED] %s", *currentResult, input.Reason)
+		} else {
+			// Set cancellation reason as the result
+			newResult = fmt.Sprintf("[CANCELLED] %s", input.Reason)
+		}
+
+		// Update task to cancelled status
 		updateQuery := `
 			UPDATE tasks 
-			SET status = $1, result = $2, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+			SET status = $1, result = $2, updated_at = CURRENT_TIMESTAMP
 			WHERE id = $3
-			RETURNING updated_at, completed_at`
+			RETURNING updated_at`
 
-		var updatedAt, completedAt string
-		err = db.QueryRow(updateQuery, models.StatusCompleted, input.Result, input.ID).Scan(&updatedAt, &completedAt)
+		var updatedAt string
+		err = db.QueryRow(updateQuery, models.StatusCancelled, newResult, input.ID).Scan(&updatedAt)
 		if err != nil {
-			log.Printf("Error completing task: %v", err)
-			return mcp.NewToolResultError("failed to complete task"), nil
+			log.Printf("Error cancelling task: %v", err)
+			return mcp.NewToolResultError("failed to cancel task"), nil
 		}
 
 		// Get task details with user names for response
@@ -149,7 +169,7 @@ func RegisterCompleteTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) 
 			AssignedTo   string
 			CreatedAt    string
 			UpdatedAt    string
-			CompletedAt  string
+			CompletedAt  *string
 			CreatorName  string
 			AssigneeName string
 		}
@@ -176,17 +196,20 @@ func RegisterCompleteTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) 
 			"assigned_to_name": task.AssigneeName,
 			"created_at":       task.CreatedAt,
 			"updated_at":       task.UpdatedAt,
-			"completed_at":     task.CompletedAt,
 		}
 
 		if task.Result != nil {
 			response["result"] = *task.Result
 		}
 
-		return mcp.NewToolResultStructured(response, fmt.Sprintf("Task %s completed successfully", input.ID)), nil
+		if task.CompletedAt != nil {
+			response["completed_at"] = *task.CompletedAt
+		}
+
+		return mcp.NewToolResultStructured(response, fmt.Sprintf("Task %s cancelled successfully", input.ID)), nil
 	}
 
-	s.AddTool(completeTaskTool, handler)
-	log.Println("complete_task tool registered")
+	s.AddTool(cancelTaskTool, handler)
+	log.Println("cancel_task tool registered")
 	return nil
 }
