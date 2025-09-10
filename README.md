@@ -115,6 +115,24 @@ docker run -p 8080:8080 \
   dushes/simple-task-mcp:latest
 ```
 
+#### Creating Admin User in Docker Container
+
+To create an admin user in a running Docker container:
+
+```bash
+# Execute the create-admin utility in the container
+docker exec -it <container_id> ./create-admin
+```
+
+Alternatively, you can run a one-off command:
+
+```bash
+docker run --rm \
+  -e DATABASE_URL=postgres://user:password@host:5432/task_manager \
+  -e JWT_SECRET=your-secret-key \
+  dushes/simple-task-mcp:latest ./create-admin
+```
+
 ## Configuration
 
 Environment variables (in `.env` file):
@@ -291,15 +309,17 @@ See `tests/README.md` for more details.
 ```
 simple-task-mcp/
 ├── auth/               # JWT authentication
-├── cmd/               # Command line tools
-│   └── create-admin/  # Admin user creation utility
-├── config/            # Configuration management
-├── database/          # Database connection and migrations
-├── models/            # Data models
-├── server/            # HTTP middleware
-├── tests/             # Test scripts and documentation
-├── tools/             # MCP tool implementations
-└── main.go            # Application entry point
+├── cmd/                # Command line tools
+│   └── create-admin/   # Admin user creation utility
+├── config/             # Configuration management
+├── database/           # Database connection and migrations
+│   └── migrations/     # SQL migration files
+├── models/             # Data models
+├── server/             # HTTP middleware
+├── tests/              # Test scripts and documentation
+├── tools/              # MCP tool implementations
+├── Dockerfile          # Docker build instructions
+└── main.go             # Application entry point
 ```
 
 ## Roadmap
