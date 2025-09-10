@@ -16,3 +16,4 @@ COPY --from=builder /app/main .
 COPY --from=builder /app/database/migrations ./database/migrations
 
 CMD ["./main"]
+
