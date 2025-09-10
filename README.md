@@ -37,11 +37,14 @@ The server uses PostgreSQL for data persistence and JWT tokens for authenticatio
 
 ### Prerequisites
 
-- Go 1.21 or higher
-- PostgreSQL 12 or higher
+- Go 1.24 or higher (for local development)
+- PostgreSQL 12 or higher (for local development)
 - Git
+- Docker and Docker Compose (for containerized setup)
 
 ### Installation
+
+#### Option 1: Local Development
 
 1. Clone the repository:
    ```bash
@@ -70,6 +73,28 @@ The server uses PostgreSQL for data persistence and JWT tokens for authenticatio
    go build -o simple-task-mcp .
    go build -o create-admin ./cmd/create-admin
    ```
+
+#### Option 2: Docker Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/dushes/simple-task-mcp.git
+   cd simple-task-mcp
+   ```
+
+2. Build and start the containers:
+   ```bash
+   docker-compose up -d
+   ```
+
+3. Create an admin user:
+   ```bash
+   docker-compose exec app ./create-admin
+   ```
+   
+   Save the JWT token for authentication.
+
+4. The server is now available at http://localhost:8080/mcp
 
 ## Configuration
 
@@ -249,11 +274,13 @@ simple-task-mcp/
 - [x] JWT authentication
 - [x] User management (create_user tool)
 - [x] Task creation (create_task tool)
-- [ ] Task retrieval (get_next_task tool)
-- [ ] Task updates (update_task tool)
-- [ ] Task status management (update_task_status tool)
-- [ ] Task archiving (archive_task tool)
-- [ ] Docker containerization
+- [x] Task retrieval (get_next_task tool)
+- [x] Task completion (complete_task tool)
+- [x] Task cancellation (cancel_task tool)
+- [x] Task comments and user interaction (wait_for_user tool)
+- [x] Token generation (generate_token tool)
+- [x] Token information (get_token_info tool)
+- [x] Docker containerization
 - [ ] GitHub Actions CI/CD
 
 ## Security

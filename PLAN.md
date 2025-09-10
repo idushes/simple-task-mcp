@@ -3,8 +3,8 @@
 ## Текущий статус проекта
 **Версия**: 0.1.0  
 **Статус**: В разработке  
-**Завершенные этапы**: 9 из 11  
-**Текущий этап**: Готов к этапу 8 (Docker контейнеризация)
+**Завершенные этапы**: 10 из 11  
+**Текущий этап**: Готов к этапу 9 (GitHub Actions CI/CD)
 
 ### Реализованные возможности:
 - ✅ Базовая инфраструктура MCP сервера
@@ -152,7 +152,7 @@ CREATE INDEX idx_task_comments_created_at ON task_comments(created_at);
 - [x] `get_token_info` - Получение информации о текущем JWT токене
 
 ### Инфраструктура:
-- [ ] Docker контейнеризация
+- [x] Docker контейнеризация
 - [ ] GitHub Actions CI/CD
 
 ## Этапы разработки
@@ -482,13 +482,16 @@ getTokenInfoTool := mcp.NewTool("get_token_info",
 - ✅ Показывает время истечения токена и оставшийся срок действия
 - ✅ Обрабатывает ошибки при невалидном токене
 
-### Этап 8: Docker контейнеризация
+### Этап 8: Docker контейнеризация ✅
 **Цель**: Создать Docker образ для удобного развертывания
 
+**Статус**: Завершен
+
 **Задачи**:
-1. Создать Dockerfile для сборки приложения
-2. Добавить .dockerignore
-3. Оптимизировать образ (multi-stage build)
+1. ✅ Создать Dockerfile для сборки приложения
+2. ✅ Добавить .dockerignore
+3. ✅ Оптимизировать образ (multi-stage build)
+4. ✅ Создать docker-compose.yml для удобного запуска
 
 **Файлы**:
 
@@ -497,7 +500,7 @@ getTokenInfoTool := mcp.NewTool("get_token_info",
 
 ```dockerfile
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24-alpine AS builder
 RUN apk add --no-cache git
 WORKDIR /app
 COPY go.mod go.sum ./
@@ -510,7 +513,8 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 COPY --from=builder /app/main .
-COPY --from=builder /app/.env.example .env.example
+# Create default .env.example if it doesn't exist in the build context
+RUN echo '# Database\nDATABASE_URL=postgres://user:password@postgres:5432/task_manager?sslmode=disable\n\n# MCP Server\nMCP_SERVER_PORT=8080\n\n# JWT\nJWT_SECRET=your-secret-key-here\n\n# Logging\nLOG_LEVEL=info' > .env.example
 CMD ["./main"]
 ```
 </details>
@@ -530,11 +534,52 @@ Dockerfile
 ```
 </details>
 
-**Проверка**:
-- Docker образ собирается успешно
-- Размер образа минимальный (alpine + бинарник)
-- Приложение запускается из образа
-- Переменные окружения передаются корректно
+<details>
+<summary><b>docker-compose.yml</b> - Комплексное развертывание с PostgreSQL</summary>
+
+```yaml
+version: '3.8'
+
+services:
+  app:
+    image: simple-task-mcp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/task_manager?sslmode=disable
+      - MCP_SERVER_PORT=8080
+      - JWT_SECRET=dev-secret-key-change-in-production
+      - LOG_LEVEL=info
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=task_manager
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+```
+</details>
+
+**Проверка**: ✅ Завершена
+- ✅ Docker образ собирается успешно
+- ✅ Размер образа минимальный (alpine + бинарник)
+- ✅ Приложение запускается из образа
+- ✅ Переменные окружения передаются корректно
+- ✅ Docker Compose запускает приложение с PostgreSQL
 
 ### Этап 9: GitHub Actions CI/CD
 **Цель**: Настроить автоматическую сборку и публикацию Docker образа в Docker Hub
