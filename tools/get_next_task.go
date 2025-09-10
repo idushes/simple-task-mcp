@@ -22,17 +22,18 @@ type GetNextTaskInput struct {
 
 // GetNextTaskOutput represents the output for get_next_task tool
 type GetNextTaskOutput struct {
-	ID           string  `json:"id"`
-	Description  string  `json:"description"`
-	Status       string  `json:"status"`
-	CreatedBy    string  `json:"created_by"`
-	CreatedByID  string  `json:"created_by_id"`
-	AssignedTo   string  `json:"assigned_to"`
-	AssignedToID string  `json:"assigned_to_id"`
-	Result       *string `json:"result,omitempty"`
-	CreatedAt    string  `json:"created_at"`
-	UpdatedAt    string  `json:"updated_at"`
-	CompletedAt  *string `json:"completed_at,omitempty"`
+	ID           string                       `json:"id"`
+	Description  string                       `json:"description"`
+	Status       string                       `json:"status"`
+	CreatedBy    string                       `json:"created_by"`
+	CreatedByID  string                       `json:"created_by_id"`
+	AssignedTo   string                       `json:"assigned_to"`
+	AssignedToID string                       `json:"assigned_to_id"`
+	Result       *string                      `json:"result,omitempty"`
+	Comments     []models.TaskCommentWithUser `json:"comments,omitempty"`
+	CreatedAt    string                       `json:"created_at"`
+	UpdatedAt    string                       `json:"updated_at"`
+	CompletedAt  *string                      `json:"completed_at,omitempty"`
 }
 
 // RegisterGetNextTaskTool registers the get_next_task tool
@@ -171,6 +172,39 @@ func RegisterGetNextTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) e
 		if completedAt.Valid {
 			completedAtStr := completedAt.Time.Format("2006-01-02T15:04:05Z")
 			output.CompletedAt = &completedAtStr
+		}
+
+		// Get comments for the task
+		commentsQuery := `
+			SELECT 
+				tc.id, tc.task_id, tc.created_by, tc.comment, tc.created_at,
+				u.name as created_by_name
+			FROM task_comments tc
+			JOIN users u ON tc.created_by = u.id
+			WHERE tc.task_id = $1
+			ORDER BY tc.created_at ASC`
+
+		commentsRows, err := db.Query(commentsQuery, task.ID)
+		if err != nil {
+			log.Printf("Error querying comments: %v", err)
+			// Don't fail the whole request if comments can't be retrieved
+		} else {
+			defer commentsRows.Close()
+
+			var comments []models.TaskCommentWithUser
+			for commentsRows.Next() {
+				var comment models.TaskCommentWithUser
+				err := commentsRows.Scan(
+					&comment.ID, &comment.TaskID, &comment.CreatedBy,
+					&comment.Comment, &comment.CreatedAt, &comment.CreatedByName,
+				)
+				if err != nil {
+					log.Printf("Error scanning comment: %v", err)
+					continue
+				}
+				comments = append(comments, comment)
+			}
+			output.Comments = comments
 		}
 
 		// Return result
