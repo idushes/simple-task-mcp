@@ -164,6 +164,11 @@ func registerTools(mcpServer *server.MCPServer, jwtManager *auth.JWTManager) err
 		return fmt.Errorf("failed to register generate_token tool: %w", err)
 	}
 
+	// Register get_token_info tool
+	if err := tools.RegisterGetTokenInfoTool(mcpServer, jwtManager); err != nil {
+		return fmt.Errorf("failed to register get_token_info tool: %w", err)
+	}
+
 	log.Println("All tools registered successfully")
 	return nil
 }
