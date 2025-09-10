@@ -344,7 +344,3 @@ simple-task-mcp/
 - Tokens are passed via standard Authorization header
 - Admin privileges are required for user management
 - Database connections use prepared statements to prevent SQL injection
-
-## License
-
-MIT License - see LICENSE file for details
