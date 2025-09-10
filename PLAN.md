@@ -540,80 +540,6 @@ Dockerfile
 - ✅ Приложение запускается из образа
 - ✅ Переменные окружения передаются корректно
 
-### Этап 9: GitHub Actions CI/CD ✅
-**Цель**: Настроить автоматическую сборку и публикацию Docker образа в Docker Hub
-
-**Статус**: Завершен
-
-**Задачи**:
-1. ✅ Создать workflow для автоматической сборки
-2. ✅ Настроить публикацию в Docker Hub при push в main
-3. ✅ Настроить правильное тегирование образов
-
-**Файлы**:
-
-<details>
-<summary><b>.github/workflows/docker-publish.yml</b> - Автоматическая сборка и публикация</summary>
-
-```yaml
-name: Docker Build and Push
-
-on:
-  push:
-    branches: [ main ]
-    tags:
-      - 'v*'
-
-env:
-  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/simple-task-mcp
-
-jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    - name: Extract metadata
-      id: meta
-      uses: docker/metadata-action@v4
-      with:
-        images: ${{ env.IMAGE_NAME }}
-        tags: |
-          type=ref,event=branch
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=raw,value=latest,enable={{is_default_branch}}
-
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-```
-</details>
-
-**Необходимые секреты в GitHub**:
-- `DOCKER_USERNAME` - имя пользователя Docker Hub
-- `DOCKER_PASSWORD` - токен доступа Docker Hub
-
-**Проверка**: ✅ Завершена
-- ✅ Workflow файл создан и настроен
-- ✅ Настроена публикация в Docker Hub при push в main
-- ✅ Настроено тегирование образов
-- ✅ Workflow запускается при push в main и при создании тегов v*
-
-
 
 ## Конфигурация .env
 ```env
@@ -669,12 +595,6 @@ JWT токен должен содержать следующие claims:
 
 Для каждого этапа создан простой скрипт или использован MCP клиент для проверки функциональности. Документированы примеры запросов и ожидаемые ответы.
 
-### Тестовые файлы:
-- `tests/test_connection.sh` - Тест подключения к серверу
-- `tests/test_create_task.sh` - Тест создания задач
-- `tests/test_get_next_task.sh` - Тест получения задач
-- `tests/TESTING_STAGE_3.md` - Документация по тестированию этапа 3
-- `tests/TESTING_STAGE_4.md` - Документация по тестированию этапа 4
 
 ## Быстрый старт
 

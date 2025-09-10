@@ -104,7 +104,7 @@ The server uses PostgreSQL for data persistence and JWT tokens for authenticatio
 You can also use the pre-built Docker image from Docker Hub:
 
 ```bash
-docker pull <your-dockerhub-username>/simple-task-mcp:latest
+docker pull dushes/simple-task-mcp:latest
 
 # Run the container
 docker run -p 8080:8080 \
@@ -112,7 +112,7 @@ docker run -p 8080:8080 \
   -e JWT_SECRET=your-secret-key \
   -e MCP_SERVER_PORT=8080 \
   -e LOG_LEVEL=info \
-  <your-dockerhub-username>/simple-task-mcp:latest
+  dushes/simple-task-mcp:latest
 ```
 
 ## Configuration
