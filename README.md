@@ -82,19 +82,38 @@ The server uses PostgreSQL for data persistence and JWT tokens for authenticatio
    cd simple-task-mcp
    ```
 
-2. Build and start the containers:
+2. Build the Docker image:
    ```bash
-   docker-compose up -d
+   docker build -t simple-task-mcp .
    ```
 
-3. Create an admin user:
+3. Run the container:
    ```bash
-   docker-compose exec app ./create-admin
+   docker run -p 8080:8080 \
+     -e DATABASE_URL=postgres://user:password@host:5432/task_manager \
+     -e JWT_SECRET=your-secret-key \
+     -e MCP_SERVER_PORT=8080 \
+     -e LOG_LEVEL=info \
+     simple-task-mcp
    ```
-   
-   Save the JWT token for authentication.
 
 4. The server is now available at http://localhost:8080/mcp
+
+#### Option 3: Using Pre-built Docker Image
+
+You can also use the pre-built Docker image from Docker Hub:
+
+```bash
+docker pull <your-dockerhub-username>/simple-task-mcp:latest
+
+# Run the container
+docker run -p 8080:8080 \
+  -e DATABASE_URL=postgres://user:password@host:5432/task_manager \
+  -e JWT_SECRET=your-secret-key \
+  -e MCP_SERVER_PORT=8080 \
+  -e LOG_LEVEL=info \
+  <your-dockerhub-username>/simple-task-mcp:latest
+```
 
 ## Configuration
 
@@ -220,6 +239,22 @@ Creates a new task and assigns it to a user.
 
 ## Development
 
+### CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and delivery:
+
+- Automatic Docker image builds on pushes to the `main` branch
+- Automatic versioned Docker image builds when tags starting with `v` are pushed
+- Images are published to Docker Hub
+
+To use the CI/CD pipeline:
+
+1. Fork or clone this repository
+2. Add the following secrets to your GitHub repository:
+   - `DOCKER_USERNAME`: Your Docker Hub username
+   - `DOCKER_PASSWORD`: Your Docker Hub access token
+3. Push to `main` or create a tag starting with `v` (e.g., `v1.0.0`)
+
 ### Running in Development Mode
 
 ```bash
@@ -281,7 +316,7 @@ simple-task-mcp/
 - [x] Token generation (generate_token tool)
 - [x] Token information (get_token_info tool)
 - [x] Docker containerization
-- [ ] GitHub Actions CI/CD
+- [x] GitHub Actions CI/CD
 
 ## Security
 
