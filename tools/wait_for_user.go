@@ -226,11 +226,10 @@ func RegisterWaitForUserTool(s *server.MCPServer, jwtManager *auth.JWTManager) e
 			response["completed_at"] = *task.CompletedAt
 		}
 
-		return mcp.NewToolResultStructured(response, fmt.Sprintf("Task %s sent to waiting for user with comment", input.ID)), nil
+		return mcp.NewToolResultStructured(response, fmt.Sprintf("Task sent to user: %s (ID: %s)", task.Description, task.ID)), nil
 	}
 
 	s.AddTool(waitForUserTool, handler)
 	log.Println("wait_for_user tool registered")
 	return nil
 }
-

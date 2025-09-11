@@ -312,14 +312,7 @@ func RegisterListCreatedTasksTool(s *server.MCPServer, jwtManager *auth.JWTManag
 			CreatedByID: targetUserID,
 		}
 
-		// Return result
-		outputJSON, err := json.MarshalIndent(output, "", "  ")
-		if err != nil {
-			log.Printf("Error marshaling output: %v", err)
-			return mcp.NewToolResultError(fmt.Sprintf("Failed to marshal output: %v", err)), nil
-		}
-
-		return mcp.NewToolResultText(string(outputJSON)), nil
+		return mcp.NewToolResultStructured(output, fmt.Sprintf("Found %d tasks created by %s", output.TotalCount, output.CreatedBy)), nil
 	}
 
 	s.AddTool(listCreatedTasksTool, handler)

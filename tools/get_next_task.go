@@ -161,7 +161,7 @@ func RegisterGetNextTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) e
 
 		if err == sql.ErrNoRows {
 			// No tasks found - return null
-			return mcp.NewToolResultText("null"), nil
+			return mcp.NewToolResultStructured(nil, "No tasks found"), nil
 		}
 
 		if err != nil {
@@ -224,14 +224,7 @@ func RegisterGetNextTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) e
 			output.Comments = comments
 		}
 
-		// Return result
-		outputJSON, err := json.MarshalIndent(output, "", "  ")
-		if err != nil {
-			log.Printf("Error marshaling output: %v", err)
-			return mcp.NewToolResultError(fmt.Sprintf("Failed to marshal output: %v", err)), nil
-		}
-
-		return mcp.NewToolResultText(string(outputJSON)), nil
+		return mcp.NewToolResultStructured(output, fmt.Sprintf("Task: %s (ID: %s, Status: %s)", output.Description, output.ID, output.Status)), nil
 	}
 
 	s.AddTool(getNextTaskTool, handler)

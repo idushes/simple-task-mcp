@@ -206,7 +206,7 @@ func RegisterCancelTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) er
 			response["completed_at"] = *task.CompletedAt
 		}
 
-		return mcp.NewToolResultStructured(response, fmt.Sprintf("Task %s cancelled successfully", input.ID)), nil
+		return mcp.NewToolResultStructured(response, fmt.Sprintf("Task cancelled: %s (ID: %s)", task.Description, task.ID)), nil
 	}
 
 	s.AddTool(cancelTaskTool, handler)

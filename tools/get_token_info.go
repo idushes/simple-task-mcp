@@ -73,7 +73,7 @@ func RegisterGetTokenInfoTool(s *server.MCPServer, jwtManager *auth.JWTManager) 
 			"message": "Token information retrieved successfully",
 		}
 
-		return mcp.NewToolResultStructured(result, "Token information retrieved successfully"), nil
+		return mcp.NewToolResultStructured(result, fmt.Sprintf("Token for %s, expires %s", user["name"], expiresAtFormatted)), nil
 	}
 
 	s.AddTool(tool, handler)

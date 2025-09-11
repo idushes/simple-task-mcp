@@ -67,12 +67,13 @@ func RegisterGenerateTokenTool(s *server.MCPServer, jwtManager *auth.JWTManager)
 		// Return success with user details and token
 		user["token"] = newToken
 		result := map[string]interface{}{
+			"token":   newToken,
 			"success": true,
 			"user":    user,
 			"message": fmt.Sprintf("Token generated successfully for user '%s'", user["name"]),
 		}
 
-		return mcp.NewToolResultStructured(result, fmt.Sprintf("Token generated successfully for user '%s'", user["name"])), nil
+		return mcp.NewToolResultStructured(result, fmt.Sprintf("Token generated for %s", user["name"])), nil
 	}
 
 	s.AddTool(tool, handler)

@@ -141,7 +141,7 @@ func RegisterCreateTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) er
 			"updated_at":       task.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 		}
 
-		return mcp.NewToolResultStructured(result, fmt.Sprintf("Task created successfully with ID: %s", task.ID)), nil
+		return mcp.NewToolResultStructured(result, fmt.Sprintf("Task created: %s (ID: %s)", task.Description, task.ID)), nil
 	}
 
 	s.AddTool(createTaskTool, handler)

@@ -21,6 +21,9 @@ func RegisterCreateUserTool(s *server.MCPServer, jwtManager *auth.JWTManager) er
 			mcp.Required(),
 			mcp.Description("Name of the user"),
 		),
+		mcp.WithString("description",
+			mcp.Description("Optional description of the user"),
+		),
 		mcp.WithBoolean("is_admin",
 			mcp.Description("Whether the user should have admin privileges (default: false)"),
 		),
@@ -59,15 +62,28 @@ func RegisterCreateUserTool(s *server.MCPServer, jwtManager *auth.JWTManager) er
 		// Default is_admin to false if not provided
 		isAdmin := request.GetBool("is_admin", false)
 
+		// Get optional description
+		description := request.GetString("description", "")
+
 		// Create user in database
 		var userID string
-		query := `
-			INSERT INTO users (name, is_admin)
-			VALUES ($1, $2)
-			RETURNING id
-		`
+		var query string
 
-		err = database.DB.QueryRow(query, name, isAdmin).Scan(&userID)
+		if description != "" {
+			query = `
+				INSERT INTO users (name, description, is_admin)
+				VALUES ($1, $2, $3)
+				RETURNING id
+			`
+			err = database.DB.QueryRow(query, name, description, isAdmin).Scan(&userID)
+		} else {
+			query = `
+				INSERT INTO users (name, is_admin)
+				VALUES ($1, $2)
+				RETURNING id
+			`
+			err = database.DB.QueryRow(query, name, isAdmin).Scan(&userID)
+		}
 		if err != nil {
 			if strings.Contains(err.Error(), "users_name_unique") || strings.Contains(err.Error(), "duplicate key value") {
 				return mcp.NewToolResultError(fmt.Sprintf("user with name '%s' already exists", name)), nil
@@ -83,6 +99,7 @@ func RegisterCreateUserTool(s *server.MCPServer, jwtManager *auth.JWTManager) er
 
 		// Return success with user details
 		result := map[string]interface{}{
+			"token":   newUserToken,
 			"success": true,
 			"user": map[string]interface{}{
 				"id":       userID,
@@ -93,7 +110,7 @@ func RegisterCreateUserTool(s *server.MCPServer, jwtManager *auth.JWTManager) er
 			"message": fmt.Sprintf("User '%s' created successfully", name),
 		}
 
-		return mcp.NewToolResultStructured(result, fmt.Sprintf("User '%s' created successfully", name)), nil
+		return mcp.NewToolResultStructured(result, fmt.Sprintf("User created: %s (ID: %s)", name, userID)), nil
 	}
 
 	s.AddTool(tool, handler)

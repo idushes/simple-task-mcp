@@ -98,11 +98,13 @@ func RegisterListUsersTool(mcpServer *server.MCPServer, jwtManager *auth.JWTMana
 		}
 
 		// Return user list
-		return mcp.NewToolResultStructured(map[string]interface{}{
+		result := map[string]interface{}{
 			"users": users,
 			"count": len(users),
 			"limit": limit,
-		}, fmt.Sprintf("Retrieved %d users (limit: %d)", len(users), limit)), nil
+		}
+
+		return mcp.NewToolResultStructured(result, fmt.Sprintf("Found %d users", len(users))), nil
 	}
 
 	mcpServer.AddTool(listUsersTool, handler)

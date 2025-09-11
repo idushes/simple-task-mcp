@@ -183,7 +183,7 @@ func RegisterCompleteTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) 
 			response["result"] = *task.Result
 		}
 
-		return mcp.NewToolResultStructured(response, fmt.Sprintf("Task %s completed successfully", input.ID)), nil
+		return mcp.NewToolResultStructured(response, fmt.Sprintf("Task completed: %s (ID: %s)", task.Description, task.ID)), nil
 	}
 
 	s.AddTool(completeTaskTool, handler)
