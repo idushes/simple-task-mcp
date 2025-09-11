@@ -218,5 +218,6 @@ func RegisterGetNextTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) e
 	}
 
 	s.AddTool(getNextTaskTool, handler)
+	log.Println("get_next_task tool registered")
 	return nil
 }

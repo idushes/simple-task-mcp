@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/dushes/simple-task-mcp/auth"
@@ -75,5 +76,6 @@ func RegisterGenerateTokenTool(s *server.MCPServer, jwtManager *auth.JWTManager)
 	}
 
 	s.AddTool(tool, handler)
+	log.Println("generate_token tool registered")
 	return nil
 }

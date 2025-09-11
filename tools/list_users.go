@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/dushes/simple-task-mcp/auth"
@@ -28,6 +29,9 @@ func RegisterListUsersTool(mcpServer *server.MCPServer, jwtManager *auth.JWTMana
 	// Create the tool
 	listUsersTool := mcp.NewTool("list_users",
 		mcp.WithDescription("List all users in the system"),
+		mcp.WithString("limit",
+			mcp.Description("Maximum number of users to return (default: 100, max: 1000)"),
+		),
 	)
 
 	handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -49,12 +53,24 @@ func RegisterListUsersTool(mcpServer *server.MCPServer, jwtManager *auth.JWTMana
 			return mcp.NewToolResultError(fmt.Sprintf("invalid token: %v", err)), nil
 		}
 
-		// Query all users
+		// Get limit parameter, default to 100
+		limit := 100
+		limitStr := request.GetString("limit", "")
+		if limitStr != "" {
+			if limitValue, parseErr := strconv.Atoi(limitStr); parseErr == nil {
+				if limitValue > 0 && limitValue <= 1000 {
+					limit = limitValue
+				}
+			}
+		}
+
+		// Query users with limit
 		rows, err := database.DB.Query(`
 			SELECT id, name, description, is_admin, created_at, updated_at
 			FROM users
 			ORDER BY name ASC
-		`)
+			LIMIT $1
+		`, limit)
 		if err != nil {
 			log.Printf("Error querying users: %v", err)
 			return mcp.NewToolResultError("Failed to query users"), nil
@@ -95,7 +111,9 @@ func RegisterListUsersTool(mcpServer *server.MCPServer, jwtManager *auth.JWTMana
 		// Return user list
 		return mcp.NewToolResultStructured(map[string]interface{}{
 			"users": users,
-		}, fmt.Sprintf("Retrieved %d users", len(users))), nil
+			"count": len(users),
+			"limit": limit,
+		}, fmt.Sprintf("Retrieved %d users (limit: %d)", len(users), limit)), nil
 	}
 
 	mcpServer.AddTool(listUsersTool, handler)

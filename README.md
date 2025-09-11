@@ -5,6 +5,7 @@ MCP (Model Context Protocol) server for task management, designed for use by AI 
 ## Features
 
 - **User Management**: Create and manage users with admin privileges
+- **Task Management**: Complete task lifecycle management (create, get, complete, cancel, comment)
 - **JWT Authentication**: Secure API access with JWT tokens via Authorization header
 - **PostgreSQL Database**: Persistent storage with automatic migrations
 - **Dual Transport Support**: HTTP/SSE (default) and stdio
@@ -13,25 +14,34 @@ MCP (Model Context Protocol) server for task management, designed for use by AI 
 
 ## Architecture
 
-The server uses PostgreSQL for data persistence and JWT tokens for authentication. Admin users can create new users, and in future releases, users will be able to manage tasks.
+The server uses PostgreSQL for data persistence and JWT tokens for authentication. Admin users can create and manage users, while all authenticated users can manage tasks through the complete task lifecycle.
 
 ### Database Schema
 
 **Users Table**:
 - `id` (UUID) - Primary key
 - `name` (VARCHAR) - User name (unique)
+- `description` (TEXT) - Optional user description
 - `is_admin` (BOOLEAN) - Admin privileges
 - `created_at` (TIMESTAMP)
 - `updated_at` (TIMESTAMP)
 
-**Tasks Table** (prepared for future use):
+**Tasks Table**:
 - `id` (UUID) - Primary key
 - `description` (TEXT) - Task description
 - `status` (VARCHAR) - Task status (pending, in_progress, waiting_for_user, completed, cancelled)
 - `created_by` (UUID) - Reference to user
 - `assigned_to` (UUID) - Reference to user
+- `result` (TEXT) - Task result or cancellation reason
 - `is_archived` (BOOLEAN)
 - Timestamps for creation, update, completion, and archiving
+
+**Task Comments Table**:
+- `id` (UUID) - Primary key
+- `task_id` (UUID) - Reference to task
+- `created_by` (UUID) - Reference to user
+- `comment` (TEXT) - Comment text
+- `created_at` (TIMESTAMP)
 
 ## Setup
 
@@ -192,6 +202,20 @@ Save the JWT token - you'll need it to authenticate API requests.
    - Header Name: `Authorization`
    - Bearer Token: `<your-jwt-token>`
 
+#### For Claude Desktop (HTTP):
+```json
+{
+  "mcpServers": {
+    "simple-task-mcp": {
+      "serverUrl": "http://simple-task-mcp-service.agents.svc.cluster.local/mcp",
+      "requestHeaders": {
+        "Authorization": "Bearer <your-jwt-token>"
+      }
+    }
+  }
+}
+```
+
 #### For Claude Desktop (stdio):
 ```json
 {
@@ -204,56 +228,66 @@ Save the JWT token - you'll need it to authenticate API requests.
 }
 ```
 
+#### For Cursor IDE:
+```json
+{
+  "mcpServers": {
+    "simple-task-mcp": {
+      "serverUrl": "http://localhost:8080/mcp",
+      "requestHeaders": {
+        "Authorization": "Bearer <your-jwt-token>"
+      }
+    }
+  }
+}
+```
+
 ## Available Tools
 
-### create_user
+### create_user (Admin Only)
+Creates a new user in the system.
+- **Parameters**: `name` (required), `is_admin` (optional)
+- **Returns**: User details with JWT token
 
-Creates a new user in the system. Only admins can use this tool.
-
-**Parameters**:
-- `name` (string, required) - Name of the user
-- `is_admin` (boolean, optional) - Whether the user should have admin privileges (default: false)
-
-**Authentication**: Required (JWT token in Authorization header)
-
-**Example Response**:
-```json
-{
-  "success": true,
-  "user": {
-    "id": "123e4567-e89b-12d3-a456-426614174000",
-    "name": "John Doe",
-    "is_admin": false,
-    "token": "eyJhbGciOiJIUzI1NiIs..."
-  },
-  "message": "User 'John Doe' created successfully"
-}
-```
+### list_users
+Lists users in the system.
+- **Parameters**: `limit` (optional - number, default: 100, max: 1000)
+- **Returns**: Array of users with their details, count, and limit info
 
 ### create_task
-
 Creates a new task and assigns it to a user.
+- **Parameters**: `description` (required), `assigned_to` (required - username)
+- **Returns**: Task details with creator and assignee names
 
-**Parameters**:
-- `description` (string, required) - Task description
-- `assigned_to` (string, required) - Username to assign the task to
+### get_next_task
+Gets the next task for the current user.
+- **Parameters**: `statuses` (optional - array, default: ["pending"])
+- **Returns**: Single task where user is creator or assignee
 
-**Authentication**: Required (JWT token in Authorization header)
+### complete_task
+Marks a task as completed.
+- **Parameters**: `id` (required - task UUID), `result` (optional)
+- **Returns**: Updated task details
 
-**Example Response**:
-```json
-{
-  "id": "456e7890-e89b-12d3-a456-426614174000",
-  "description": "Implement user authentication",
-  "status": "pending",
-  "created_by": "123e4567-e89b-12d3-a456-426614174000",
-  "created_by_name": "Admin User",
-  "assigned_to": "789e0123-e89b-12d3-a456-426614174000",
-  "assigned_to_name": "John Doe",
-  "created_at": "2024-01-15T10:30:00Z",
-  "updated_at": "2024-01-15T10:30:00Z"
-}
-```
+### cancel_task
+Cancels a task with reason.
+- **Parameters**: `id` (required - task UUID), `reason` (required)
+- **Returns**: Updated task details
+
+### wait_for_user
+Sends task to waiting status with comment.
+- **Parameters**: `id` (required - task UUID), `comment` (required)
+- **Returns**: Updated task details
+
+### generate_token (Admin Only)
+Generates new JWT token for existing user.
+- **Parameters**: `user_id` (required - user UUID)
+- **Returns**: New JWT token and user details
+
+### get_token_info
+Gets information about current JWT token.
+- **Parameters**: None
+- **Returns**: Token details and expiration info
 
 ## Development
 
@@ -328,6 +362,7 @@ simple-task-mcp/
 - [x] PostgreSQL integration
 - [x] JWT authentication
 - [x] User management (create_user tool)
+- [x] User listing (list_users tool)
 - [x] Task creation (create_task tool)
 - [x] Task retrieval (get_next_task tool)
 - [x] Task completion (complete_task tool)

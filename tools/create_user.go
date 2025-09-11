@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/dushes/simple-task-mcp/auth"
@@ -96,6 +97,7 @@ func RegisterCreateUserTool(s *server.MCPServer, jwtManager *auth.JWTManager) er
 	}
 
 	s.AddTool(tool, handler)
+	log.Println("create_user tool registered")
 	return nil
 }
 

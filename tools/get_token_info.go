@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -75,5 +76,6 @@ func RegisterGetTokenInfoTool(s *server.MCPServer, jwtManager *auth.JWTManager) 
 	}
 
 	s.AddTool(tool, handler)
+	log.Println("get_token_info tool registered")
 	return nil
 }
