@@ -139,6 +139,11 @@ func registerTools(mcpServer *server.MCPServer, jwtManager *auth.JWTManager) err
 		return fmt.Errorf("failed to register create_task tool: %w", err)
 	}
 
+	// Register list_created_tasks tool
+	if err := tools.RegisterListCreatedTasksTool(mcpServer, jwtManager); err != nil {
+		return fmt.Errorf("failed to register list_created_tasks tool: %w", err)
+	}
+
 	// Register get_next_task tool
 	if err := tools.RegisterGetNextTaskTool(mcpServer, jwtManager); err != nil {
 		return fmt.Errorf("failed to register get_next_task tool: %w", err)

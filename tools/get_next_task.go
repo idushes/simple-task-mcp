@@ -91,9 +91,25 @@ func RegisterGetNextTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) e
 			"completed":        true,
 			"cancelled":        true,
 		}
+
+		// Check for duplicates
+		seenStatuses := make(map[string]bool)
+
 		for _, status := range input.Statuses {
+			// Check for empty strings
+			if strings.TrimSpace(status) == "" {
+				return mcp.NewToolResultError("status cannot be empty"), nil
+			}
+
+			// Check for duplicates
+			if seenStatuses[status] {
+				return mcp.NewToolResultError(fmt.Sprintf("duplicate status: '%s'", status)), nil
+			}
+			seenStatuses[status] = true
+
+			// Check for valid status
 			if !validStatuses[status] {
-				return mcp.NewToolResultError(fmt.Sprintf("invalid status: %s", status)), nil
+				return mcp.NewToolResultError(fmt.Sprintf("invalid status: '%s'. Valid statuses are: pending, in_progress, waiting_for_user, completed, cancelled", status)), nil
 			}
 		}
 
