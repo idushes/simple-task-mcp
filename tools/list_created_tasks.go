@@ -61,6 +61,7 @@ func RegisterListCreatedTasksTool(s *server.MCPServer, jwtManager *auth.JWTManag
 		),
 		mcp.WithArray("statuses",
 			mcp.Description("Array of statuses to filter by. Available statuses: pending, in_progress, waiting_for_user, completed, cancelled. If not provided, returns tasks with all statuses."),
+			mcp.Items(map[string]any{"type": "string"}),
 		),
 	)
 

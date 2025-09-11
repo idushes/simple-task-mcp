@@ -42,6 +42,7 @@ func RegisterGetNextTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) e
 		mcp.WithDescription("Get one task where the current user is assignee, filtered by status"),
 		mcp.WithArray("statuses",
 			mcp.Description("Array of statuses to filter by. Available statuses: pending, in_progress, waiting_for_user, completed, cancelled. If not provided, defaults to [\"pending\"]"),
+			mcp.Items(map[string]any{"type": "string"}),
 		),
 	)
 

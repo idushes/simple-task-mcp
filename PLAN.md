@@ -297,6 +297,7 @@ listCreatedTasksTool := mcp.NewTool("list_created_tasks",
     ),
     mcp.WithArray("statuses",
         mcp.Description("Array of statuses to filter by. Available statuses: pending, in_progress, waiting_for_user, completed, cancelled. If not provided, returns tasks with all statuses."),
+        mcp.Items(map[string]any{"type": "string"}),
     ),
 )
 ```
@@ -328,6 +329,7 @@ listCreatedTasksTool := mcp.NewTool("list_created_tasks",
 - ✅ Включает комментарии к задачам
 - ✅ Сортировка по дате создания
 - ✅ Показывает как архивные, так и активные задачи
+- ✅ Корректная JSON Schema с указанием типа элементов массива (mcp.Items)
 
 ### Этап 4: Получение следующей задачи (get_next_task) ✅
 **Цель**: Реализовать получение задач по фильтру
@@ -344,6 +346,7 @@ getNextTaskTool := mcp.NewTool("get_next_task",
     mcp.WithDescription("Get one task where the current user is assignee, filtered by status"),
     mcp.WithArray("statuses",
         mcp.Description("Array of statuses to filter by. Available statuses: pending, in_progress, waiting_for_user, completed, cancelled. If not provided, defaults to [\"pending\"]"),
+        mcp.Items(map[string]any{"type": "string"}),
     ),
 )
 ```
@@ -369,6 +372,7 @@ getNextTaskTool := mcp.NewTool("get_next_task",
 - ✅ Включает имена и UUID пользователей
 - ✅ Валидация статусов с проверкой на корректность, пустые строки и дублирование
 - ✅ Информативные сообщения об ошибках валидации
+- ✅ Корректная JSON Schema с указанием типа элементов массива (mcp.Items)
 
 ### Этап 5: Завершение задач (complete_task) ✅
 **Цель**: Реализовать завершение задач с добавлением результата
