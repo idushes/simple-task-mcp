@@ -15,15 +15,6 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-// ListUsers returns a list of all users
-func ListUsers(db *sql.DB) mcp.Tool {
-	listUsersTool := mcp.NewTool("list_users",
-		mcp.WithDescription("List all users in the system"),
-	)
-
-	return listUsersTool
-}
-
 // RegisterListUsersTool registers the list_users tool with the MCP server
 func RegisterListUsersTool(mcpServer *server.MCPServer, jwtManager *auth.JWTManager) error {
 	// Create the tool

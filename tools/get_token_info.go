@@ -16,6 +16,7 @@ import (
 func RegisterGetTokenInfoTool(s *server.MCPServer, jwtManager *auth.JWTManager) error {
 	tool := mcp.NewTool("get_token_info",
 		mcp.WithDescription("Get information about the current JWT token"),
+		mcp.WithInputSchema[struct{}](),
 	)
 
 	handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {

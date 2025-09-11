@@ -568,6 +568,7 @@ generateTokenTool := mcp.NewTool("generate_token",
 ```go
 getTokenInfoTool := mcp.NewTool("get_token_info",
     mcp.WithDescription("Get information about the current JWT token"),
+    mcp.WithInputSchema[struct{}](),
 )
 ```
 </details>
@@ -587,6 +588,7 @@ getTokenInfoTool := mcp.NewTool("get_token_info",
 - ✅ Возвращает информацию о пользователе (ID, имя, права)
 - ✅ Показывает время истечения токена и оставшийся срок действия
 - ✅ Обрабатывает ошибки при невалидном токене
+- ✅ Корректная JSON Schema с пустой схемой входных данных для инструмента без параметров
 
 ### Этап 8: Docker контейнеризация ✅
 **Цель**: Создать Docker образ для удобного развертывания
