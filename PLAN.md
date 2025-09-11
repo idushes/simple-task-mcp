@@ -286,7 +286,7 @@ createTaskTool := mcp.NewTool("create_task",
 
 ```go
 getNextTaskTool := mcp.NewTool("get_next_task",
-    mcp.WithDescription("Get one task where the current user is either creator or assignee, filtered by status"),
+    mcp.WithDescription("Get one task where the current user is assignee, filtered by status"),
     mcp.WithArray("statuses",
         mcp.Description("Array of statuses to filter by. Available statuses: pending, in_progress, waiting_for_user, completed, cancelled. If not provided, defaults to [\"pending\"]"),
     ),
@@ -294,7 +294,7 @@ getNextTaskTool := mcp.NewTool("get_next_task",
 ```
 
 **Реализованные возможности**:
-- Возвращает одну задачу, где текущий пользователь является либо создателем (created_by), либо исполнителем (assigned_to)
+- Возвращает одну задачу, где текущий пользователь является исполнителем (assigned_to)
 - Задачи сортируются по created_at (старые первые)
 - Поддерживает фильтрацию по массиву статусов
 - Значение по умолчанию: ["pending"] если статусы не указаны
@@ -308,7 +308,7 @@ getNextTaskTool := mcp.NewTool("get_next_task",
 **Проверка**: ✅ Завершена
 - ✅ Возвращает только неархивные задачи
 - ✅ Фильтрует по статусам из массива
-- ✅ Возвращает задачи где пользователь создатель или исполнитель
+- ✅ Возвращает задачи где пользователь является исполнителем (assigned_to)
 - ✅ Возвращает null если задач нет
 - ✅ Использует значение по умолчанию ["pending"]
 - ✅ Включает имена и UUID пользователей
@@ -683,7 +683,7 @@ go run cmd/create-admin/main.go
 Получение следующей задачи по фильтру статусов.
 - Параметры: `statuses` (по умолчанию ["pending"])
 - Доступные статусы: pending, in_progress, waiting_for_user, completed, cancelled
-- Возвращает задачи где пользователь создатель или исполнитель
+- Возвращает задачи где пользователь является исполнителем (assigned_to)
 - Включает поле `result` для завершенных задач
 
 ### complete_task

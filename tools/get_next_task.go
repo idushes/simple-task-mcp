@@ -39,7 +39,7 @@ type GetNextTaskOutput struct {
 // RegisterGetNextTaskTool registers the get_next_task tool
 func RegisterGetNextTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) error {
 	getNextTaskTool := mcp.NewTool("get_next_task",
-		mcp.WithDescription("Get one task where the current user is either creator or assignee, filtered by status"),
+		mcp.WithDescription("Get one task where the current user is assignee, filtered by status"),
 		mcp.WithArray("statuses",
 			mcp.Description("Array of statuses to filter by. Available statuses: pending, in_progress, waiting_for_user, completed, cancelled. If not provided, defaults to [\"pending\"]"),
 		),
@@ -122,7 +122,7 @@ func RegisterGetNextTaskTool(s *server.MCPServer, jwtManager *auth.JWTManager) e
 			JOIN users assignee ON t.assigned_to = assignee.id
 			WHERE t.is_archived = false
 				AND t.status IN (%s)
-				AND (t.created_by = $1 OR t.assigned_to = $1)
+				AND t.assigned_to = $1
 			ORDER BY t.created_at ASC
 			LIMIT 1
 		`, strings.Join(placeholders, ", "))
