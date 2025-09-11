@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 
 	"github.com/dushes/simple-task-mcp/auth"
@@ -20,8 +19,9 @@ func RegisterListUsersTool(mcpServer *server.MCPServer, jwtManager *auth.JWTMana
 	// Create the tool
 	listUsersTool := mcp.NewTool("list_users",
 		mcp.WithDescription("List all users in the system"),
-		mcp.WithString("limit",
+		mcp.WithNumber("limit",
 			mcp.Description("Maximum number of users to return (default: 100, max: 1000)"),
+			mcp.DefaultNumber(100),
 		),
 	)
 
@@ -45,14 +45,12 @@ func RegisterListUsersTool(mcpServer *server.MCPServer, jwtManager *auth.JWTMana
 		}
 
 		// Get limit parameter, default to 100
-		limit := 100
-		limitStr := request.GetString("limit", "")
-		if limitStr != "" {
-			if limitValue, parseErr := strconv.Atoi(limitStr); parseErr == nil {
-				if limitValue > 0 && limitValue <= 1000 {
-					limit = limitValue
-				}
-			}
+		limit := int(request.GetFloat("limit", 100))
+		if limit < 1 {
+			limit = 1
+		}
+		if limit > 1000 {
+			limit = 1000
 		}
 
 		// Query users with limit

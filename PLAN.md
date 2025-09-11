@@ -215,6 +215,10 @@ CREATE INDEX idx_task_comments_created_at ON task_comments(created_at);
 ```go
 listUsersTool := mcp.NewTool("list_users",
     mcp.WithDescription("List all users in the system"),
+    mcp.WithNumber("limit",
+        mcp.Description("Maximum number of users to return (default: 100, max: 1000)"),
+        mcp.DefaultNumber(100),
+    ),
 )
 ```
 
@@ -227,6 +231,36 @@ listUsersTool := mcp.NewTool("list_users",
 - Возвращает полную информацию о пользователях включая ID, имя, описание, права админа и даты создания/обновления
 - Возвращает количество найденных пользователей и примененный лимит
 
+**Формат возвращаемых данных**:
+```json
+{
+  "users": [
+    {
+      "id": "uuid-пользователя",
+      "name": "имя_пользователя",
+      "description": "описание пользователя (опционально)",
+      "is_admin": true/false,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "count": 5,
+  "limit": 100
+}
+```
+
+**Поля пользователя**:
+- `id` (string): UUID пользователя
+- `name` (string): уникальное имя пользователя
+- `description` (string, optional): описание пользователя (может отсутствовать)
+- `is_admin` (boolean): права администратора
+- `created_at` (string): дата создания в формате ISO 8601
+- `updated_at` (string): дата обновления в формате ISO 8601
+
+**Мета-информация**:
+- `count` (number): количество возвращенных пользователей
+- `limit` (number): примененный лимит
+
 **Файлы**: `tools/list_users.go`, `database/migrations/006_add_user_description.sql`
 </details>
 
@@ -237,6 +271,8 @@ listUsersTool := mcp.NewTool("list_users",
 - ✅ Инструмент возвращает список всех пользователей
 - ✅ Включает опциональное поле description
 - ✅ Сортирует пользователей по имени
+- ✅ Детально описан формат возвращаемых данных с примерами JSON
+- ✅ Документированы все поля пользователя и мета-информация
 
 ### Этап 3: Создание задач (create_task) ✅
 **Цель**: Реализовать создание новых задач
@@ -798,8 +834,9 @@ go run cmd/create-admin/main.go
 
 ### list_users
 Получение списка пользователей с поддержкой лимита.
-- Параметры: `limit` (опциональный - число, по умолчанию 100, максимум 1000)
+- Параметры: `limit` (опциональный - число, по умолчанию 100, минимум 1, максимум 1000)
 - Возвращает список пользователей с информацией о количестве и лимите
 - Включает опциональное поле description
 - Сортирует пользователей по имени (name)
-- Возвращает полную информацию о пользователях
+- Формат ответа: `{"users": [...], "count": число, "limit": число}`
+- Каждый пользователь: `{"id": "uuid", "name": "string", "description": "string?", "is_admin": boolean, "created_at": "ISO-date", "updated_at": "ISO-date"}`
